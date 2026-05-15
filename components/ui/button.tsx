@@ -11,10 +11,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', href, ...props }, ref) => {
     const classes = cn(
       'inline-flex items-center justify-center rounded-2xl px-5 py-3 text-sm font-semibold transition duration-300 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60',
-      variant === 'default' && 'bg-primary text-slate-950 shadow-[0_0_32px_rgba(0,185,255,0.24)] hover:bg-primary/90',
-      variant === 'secondary' && 'border border-primary/30 bg-slate-950/60 text-white hover:bg-slate-900/80',
-      variant === 'ghost' && 'bg-transparent text-white hover:bg-primary/10',
-      variant === 'danger' && 'bg-danger/20 text-danger hover:bg-danger/25',
+      variant === 'default' &&
+        'bg-primary text-gray-950 shadow-[0_0_24px_rgba(0,185,255,0.2)] hover:bg-primary-light hover:shadow-[0_0_40px_rgba(0,185,255,0.35)]',
+      variant === 'secondary' &&
+        'border border-white/10 bg-white/5 text-slate-200 hover:bg-white/10 hover:border-white/20',
+      variant === 'ghost' &&
+        'bg-transparent text-slate-300 hover:bg-white/5 hover:text-white',
+      variant === 'danger' &&
+        'bg-red-500/10 text-red-400 hover:bg-red-500/20',
       className,
     );
 
@@ -26,9 +30,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       );
     }
 
-    return (
-      <button ref={ref} className={classes} {...props} />
-    );
+    return <button ref={ref} className={classes} {...props} />;
   },
 );
 Button.displayName = 'Button';

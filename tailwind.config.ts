@@ -7,35 +7,70 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // SofaScore inspired color palette
-        primary: '#1F4FA1',      // Deep blue (nav/primary actions)
-        'primary-light': '#2563EB', // Lighter blue for hover states
-        'primary-dark': '#1a3f81',  // Darker blue
-        secondary: '#0EA5E9',    // Sky blue (accent data blocks)
-        accent: '#06B6D4',       // Cyan (highlights)
-        neutral: '#F0F2F5',      // Light background
-        'neutral-dark': '#E5E7EB', // Light gray
-        border: '#D1D5DB',       // Border color
-        background: '#FFFFFF',   // White background
-        surface: '#F9FAFB',      // Off-white surface
-        'surface-dark': '#F3F4F6', // Slightly darker surface
-        muted: '#6B7280',        // Muted text
-        danger: '#EF4444',       // Red/danger
-        success: '#10B981',      // Green/success
-        warning: '#F59E0B',      // Amber/warning
+        // SofaScore-inspired dark theme palette
+        primary: '#00b9ff',
+        'primary-light': '#33ccff',
+        'primary-dark': '#0099dd',
+        secondary: '#1a7af2',
+        accent: '#00e5ff',
+        // Background hierarchy
+        background: '#0a0e17',
+        surface: '#111827',
+        'surface-dark': '#0d1321',
+        'surface-light': '#1a2332',
+        // Neutral tones
+        neutral: '#141929',
+        'neutral-dark': '#0f1520',
+        // Text hierarchy
+        muted: '#8b95a5',
+        'text-dim': '#5a6577',
+        // Borders
+        border: 'rgba(255,255,255,0.08)',
+        'border-light': 'rgba(255,255,255,0.12)',
+        // Semantic colors
+        danger: '#ff1744',
+        success: '#00c853',
+        warning: '#ffab00',
+        live: '#00e676',
+        // Legacy compatibility (map to new tokens)
+        slate: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+          950: '#020617',
+        },
       },
       boxShadow: {
-        card: '0 4px 6px rgba(0, 0, 0, 0.07)',
-        'card-hover': '0 10px 15px rgba(0, 0, 0, 0.1)',
-        'data-block': '0 2px 8px rgba(31, 79, 161, 0.12)',
+        card: '0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)',
+        'card-hover': '0 4px 16px rgba(0,185,255,0.12), 0 2px 8px rgba(0,0,0,0.4)',
+        'data-block': '0 2px 8px rgba(0,185,255,0.08)',
+        glow: '0 0 32px rgba(0,185,255,0.16)',
       },
-      backgroundColor: {
-        'data-highlight': 'rgba(14, 165, 233, 0.1)',
-        'success-light': 'rgba(16, 185, 129, 0.1)',
-        'danger-light': 'rgba(239, 68, 68, 0.1)',
+      backgroundImage: {
+        'pitch-stripes':
+          'repeating-linear-gradient(90deg, rgba(0,185,255,0.02) 0px, rgba(0,185,255,0.02) 1px, transparent 1px, transparent 40px)',
+        'stadium-glow':
+          'radial-gradient(ellipse at 50% 0%, rgba(0,185,255,0.06) 0%, transparent 70%)',
+        'hero-gradient':
+          'linear-gradient(180deg, rgba(0,185,255,0.08) 0%, rgba(10,14,23,0) 50%)',
+        'card-gradient':
+          'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+        'grass-gradient':
+          'linear-gradient(180deg, rgba(0,200,83,0.04) 0%, rgba(0,200,83,0) 30%)',
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'San Francisco', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+      },
+      borderRadius: {
+        sofascore: '2rem',
       },
     },
   },

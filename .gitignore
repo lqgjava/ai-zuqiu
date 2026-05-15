@@ -44,3 +44,7 @@ temp_*.html
 # Cache
 .cache/
 .parcel-cache/
+
+# Claude / Superpowers
+.claude/
+.superpowers/

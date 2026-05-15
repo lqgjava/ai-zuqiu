@@ -61,26 +61,34 @@ export default function PricingClient() {
   const { user } = useAuth();
   const { subscription, planName } = useSubscription();
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const success = searchParams.get('success');
   const canceled = searchParams.get('canceled');
 
   useEffect(() => {
     if (success) {
-      alert('支付成功！您的套餐已升级。');
+      setError(null);
     } else if (canceled) {
-      alert('支付已取消。如需升级，请重新选择套餐。');
+      setError('支付已取消。如需升级，请重新选择套餐。');
     }
   }, [success, canceled]);
 
   const handleUpgrade = async (planId: string) => {
+    setError(null);
+
     if (!user) {
       window.location.href = '/login';
       return;
     }
 
+    if (planId === 'free') {
+      setError('免费版无需购买，直接使用即可。');
+      return;
+    }
+
     if (subscription?.plan_id === planId) {
-      alert('您已经是这个套餐了');
+      setError('您已经是这个套餐了，无需重复购买。');
       return;
     }
 
@@ -98,14 +106,21 @@ export default function PricingClient() {
         }),
       });
 
-      const { url } = await response.json();
+      const data = await response.json();
 
-      if (url) {
-        window.location.href = url;
+      if (data.error) {
+        setError(data.error);
+        return;
       }
-    } catch (error) {
-      console.error('升级失败:', error);
-      alert('升级失败，请稍后重试');
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError('无法创建支付会话，请稍后重试。');
+      }
+    } catch (err) {
+      console.error('升级失败:', err);
+      setError('网络错误，请检查连接后重试。');
     } finally {
       setLoading(null);
     }
@@ -125,18 +140,32 @@ export default function PricingClient() {
       {/* Header Section */}
       <div className="text-center mb-16">
         <p className="badge inline-flex mb-4">订阅套餐</p>
-        <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-4">{`球智 AI 预测服务`}</h1>
-        <p className="mt-4 text-muted max-w-2xl mx-auto text-lg">
+        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">球智 AI 预测服务</h1>
+        <p className="mt-4 text-slate-300 max-w-2xl mx-auto text-lg">
           选择适合您的套餐，享受专业级的足球 AI 分析和实时数据服务。
         </p>
         {user && (
           <div className="mt-6 bg-surface rounded-lg p-4 inline-block">
-            <p className="text-sm text-muted">当前订阅：<span className="font-bold text-primary">{planName}</span></p>
+            <p className="text-sm text-slate-300">
+              当前订阅：<span className="font-bold text-primary">{planName}</span>
+            </p>
             {subscription && (
-              <p className="text-xs text-muted mt-1">
+              <p className="text-xs text-slate-300 mt-1">
                 到期时间：{subscription.current_period_end.toLocaleDateString('zh-CN')}
               </p>
             )}
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-6 mx-auto max-w-xl rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-300">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mt-6 mx-auto max-w-xl rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-300">
+            支付成功！您的套餐已升级。
           </div>
         )}
       </div>
@@ -144,9 +173,16 @@ export default function PricingClient() {
       {/* Pricing Cards Grid */}
       <div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto">
         {plans.map((plan) => (
-          <Card key={plan.id} className={`relative rounded-lg overflow-hidden transition-all hover:shadow-card-hover ${plan.popular ? 'border-primary border-2 shadow-card-hover' : 'border border-neutral-dark'}`}>
+          <Card
+            key={plan.id}
+            className={`relative rounded-lg overflow-hidden transition-all hover:shadow-card-hover ${
+              plan.popular
+                ? 'border-primary border-2 shadow-card-hover'
+                : 'border border-white/10'
+            }`}
+          >
             {plan.popular && (
-              <div className="bg-primary text-white px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-center">
+              <div className="bg-primary text-slate-950 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-center">
                 ⭐ 最受欢迎
               </div>
             )}
@@ -154,20 +190,20 @@ export default function PricingClient() {
             <div className="p-8">
               {/* Plan Header */}
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-primary mb-4">{plan.name}</h3>
+                <h3 className="text-2xl font-bold text-white mb-4">{plan.name}</h3>
                 <div className="mb-4">
-                  <span className="text-5xl font-bold text-primary">¥{plan.price}</span>
-                  <span className="text-muted ml-2">/{plan.period}</span>
+                  <span className="text-5xl font-bold text-white">¥{plan.price}</span>
+                  <span className="text-slate-300 ml-2">/{plan.period}</span>
                 </div>
-                <p className="text-sm text-muted font-medium">{plan.description}</p>
+                <p className="text-sm text-slate-300 font-medium">{plan.description}</p>
               </div>
 
               {/* Features List */}
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0 mt-1.5"></div>
-                    <span className="text-sm text-muted">{feature}</span>
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full flex-shrink-0 mt-1.5" />
+                    <span className="text-sm text-slate-300">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -175,10 +211,10 @@ export default function PricingClient() {
               {/* CTA Button */}
               <Button
                 className={`w-full py-3 rounded-lg font-semibold transition-all ${
-                  plan.popular 
-                    ? 'btn-primary' 
-                    : isCurrentPlan(plan.id) 
-                    ? 'btn-secondary' 
+                  plan.popular
+                    ? 'btn-primary'
+                    : isCurrentPlan(plan.id)
+                    ? 'btn-secondary'
                     : 'btn-primary'
                 }`}
                 onClick={() => handleUpgrade(plan.id)}
@@ -193,29 +229,29 @@ export default function PricingClient() {
 
       {/* FAQ Section */}
       <div className="mt-16 text-center">
-        <h2 className="text-3xl font-bold text-primary mb-12">常见问题</h2>
+        <h2 className="text-3xl font-bold text-white mb-12">常见问题</h2>
         <div className="grid gap-6 max-w-4xl mx-auto lg:grid-cols-2">
           {[
             {
               q: '如何取消订阅？',
-              a: '您可以在账户设置中随时取消订阅，取消后仍可使用至当前计费周期结束。'
+              a: '您可以在账户设置中随时取消订阅，取消后仍可使用至当前计费周期结束。',
             },
             {
               q: '支持哪些支付方式？',
-              a: '目前支持支付宝、微信支付和银行卡支付，确保安全便捷的交易体验。'
+              a: '目前支持支付宝、微信支付和银行卡支付，确保安全便捷的交易体验。',
             },
             {
               q: '有试用期吗？',
-              a: '专业版和尊贵版提供 7 天免费试用，您可以先体验后再决定是否订阅。'
+              a: '专业版和尊贵版提供 7 天免费试用，您可以先体验后再决定是否订阅。',
             },
             {
               q: '数据是实时的吗？',
-              a: '是的，所有高级套餐都包含实时数据更新，确保您获得最新的比赛信息和 AI 预测。'
-            }
+              a: '是的，所有高级套餐都包含实时数据更新，确保您获得最新的比赛信息和 AI 预测。',
+            },
           ].map((faq, index) => (
             <Card key={index} className="card rounded-lg p-6 text-left hover:shadow-card-hover">
-              <p className="font-bold text-primary text-sm mb-2">Q：{faq.q}</p>
-              <p className="text-muted text-sm">{faq.a}</p>
+              <p className="font-bold text-white text-sm mb-2">Q：{faq.q}</p>
+              <p className="text-slate-300 text-sm">{faq.a}</p>
             </Card>
           ))}
         </div>

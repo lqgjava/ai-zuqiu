@@ -1,16 +1,36 @@
 import { allMatches } from '@/lib/sampleData';
 
 function buildUrl(path: string) {
-  return `https://your-domain.com${path}`;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://qiuzhi-ai.vercel.app';
+  return `${baseUrl}${path}`;
 }
 
 export default function sitemap() {
-  const staticPaths = ['/', '/parlay', '/worldcup'];
+  const staticPaths = [
+    '/',
+    '/jingcai',
+    '/leagues',
+    '/parlay',
+    '/worldcup',
+    '/pricing',
+    '/login',
+    '/register',
+    '/account',
+  ];
 
-  const dynamicPaths = allMatches.map((match) => ({
-    url: buildUrl(`/match/${match.id}`),
-    lastModified: new Date().toISOString(),
+  const staticEntries = staticPaths.map((loc) => ({
+    url: buildUrl(loc),
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: loc === '/' ? 1.0 : 0.8,
   }));
 
-  return [...staticPaths.map((loc) => ({ url: buildUrl(loc) })), ...dynamicPaths];
+  const dynamicEntries = allMatches.map((match) => ({
+    url: buildUrl(`/match/${match.id}`),
+    lastModified: new Date(),
+    changeFrequency: 'hourly' as const,
+    priority: 0.7,
+  }));
+
+  return [...staticEntries, ...dynamicEntries];
 }

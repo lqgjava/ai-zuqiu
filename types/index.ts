@@ -20,10 +20,18 @@ export interface MatchEvent {
   awayScore?: number;
   weather: string;
   stadium: string;
+  injuries?: string;
+  preview?: string;
   aiPrediction: PredictionSummary;
   analytics: MatchAnalytics;
   oddsHistory: OddsPoint[];
   history: HeadToHead[];
+}
+
+export interface AiFactor {
+  title: string;
+  text: string;
+  weight: number;
 }
 
 export interface PredictionSummary {
@@ -32,6 +40,31 @@ export interface PredictionSummary {
   away: number;
   riskRating: 'Low' | 'Medium' | 'High';
   summary: string;
+  confidence?: number;
+  factors?: AiFactor[];
+}
+
+export interface AiPredictionInput {
+  homeTeam: { name: string; ranking: number; form?: number };
+  awayTeam: { name: string; ranking: number; form?: number };
+  leagueContext: { name: string; tier?: number };
+  matchContext: { stage: string; kickOff: string };
+  headToHead?: HeadToHead[];
+  oddsHistory?: OddsPoint[];
+  analytics?: {
+    xG: { home: number; away: number };
+    possession: { home: number; away: number };
+  };
+}
+
+export interface AiPredictionResult {
+  home: number;
+  draw: number;
+  away: number;
+  riskRating: 'Low' | 'Medium' | 'High';
+  confidence: number;
+  summary: string;
+  factors: AiFactor[];
 }
 
 export interface MatchAnalytics {

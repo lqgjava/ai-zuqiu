@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,10 +15,18 @@ export default function LoginPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const { signInWithOtp } = useAuth();
 
+  const isSupabaseConfigured = supabase !== null;
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage('');
     setStatus('loading');
+
+    if (!isSupabaseConfigured) {
+      setMessage('Supabase 未配置。请在 .env.local 中设置 NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY。');
+      setStatus('error');
+      return;
+    }
 
     if (!email) {
       setMessage('请输入邮箱地址以继续。');
@@ -45,6 +54,17 @@ export default function LoginPage() {
           <h1 className="text-4xl font-semibold text-white">访问球智 AI 会员功能</h1>
           <p className="text-slate-300">使用电子邮箱登录后，可保存串关组合、同步个人偏好和实时AI分析报告。</p>
         </div>
+
+        {!isSupabaseConfigured && (
+          <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-300">
+            <p className="font-semibold">Supabase 未配置</p>
+            <p className="mt-1">
+              请在项目根目录的 <code className="rounded bg-amber-500/10 px-1 py-0.5 text-xs">.env.local</code> 中设置
+              NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY，
+              然后重启开发服务器。
+            </p>
+          </div>
+        )}
 
         <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
           <div>

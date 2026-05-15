@@ -43,34 +43,38 @@ export function useWorldCupData<T extends Record<string, any>>(initialMatches: T
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<'official' | 'fallback'>('fallback');
+  const [lastUpdated, setLastUpdated] = useState<string>('—');
+
+  async function loadData() {
+    try {
+      const response = await fetch('/api/football?type=worldcup');
+      const data = await response.json();
+      if (data.matches) setMatches(data.matches);
+      if (data.standings) setStandings(data.standings);
+      setSource('official');
+      setLastUpdated(new Date().toLocaleTimeString('zh-CN'));
+    } catch (err) {
+      setError('无法获取世界杯实时数据，已使用备用数据。');
+      setSource('fallback');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
-
-    async function loadData() {
-      try {
-        const response = await fetch('/api/football?type=worldcup');
-        const data = await response.json();
-        if (active) {
-          if (data.matches) setMatches(data.matches);
-          if (data.standings) setStandings(data.standings);
-          setSource('official');
-        }
-      } catch (err) {
-        setError('无法获取世界杯实时数据，已使用备用数据。');
-        setSource('fallback');
-      } finally {
-        if (active) setLoading(false);
-      }
+    async function fetchData() {
+      if (!active) return;
+      await loadData();
     }
 
-    loadData();
+    fetchData();
     return () => {
       active = false;
     };
   }, []);
 
-  return { matches, standings, loading, error, source };
+  return { matches, standings, loading, error, source, lastUpdated, refresh: loadData };
 }
 
 export function useJingcaiData(initialMatches: MatchEvent[]) {
@@ -78,35 +82,39 @@ export function useJingcaiData(initialMatches: MatchEvent[]) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<'official' | 'fallback'>('fallback');
+  const [lastUpdated, setLastUpdated] = useState<string>('—');
+
+  async function loadJingcai() {
+    try {
+      const response = await fetch('/api/football?type=jingcai');
+      const data = await response.json();
+      if (data.matches) {
+        setMatches(data.matches);
+        setSource('official');
+        setLastUpdated(new Date().toLocaleTimeString('zh-CN'));
+      }
+    } catch (err) {
+      setError('无法获取竞彩实时数据，已使用备用数据。');
+      setSource('fallback');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
-    let intervalId: ReturnType<typeof setInterval>;
 
-    async function loadJingcai() {
-      try {
-        const response = await fetch('/api/football?type=jingcai');
-        const data = await response.json();
-        if (active && data.matches) {
-          setMatches(data.matches);
-          setSource('official');
-        }
-      } catch (err) {
-        setError('无法获取竞彩实时数据，已使用备用数据。');
-        setSource('fallback');
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
+    const fetchData = async () => {
+      if (!active) return;
+      await loadJingcai();
+    };
 
-    loadJingcai();
-    intervalId = setInterval(loadJingcai, 60_000); // 每分钟刷新竞彩数据
+    fetchData();
 
     return () => {
       active = false;
-      clearInterval(intervalId);
     };
   }, []);
 
-  return { matches, loading, error, source };
+  return { matches, loading, error, source, lastUpdated, refresh: loadJingcai };
 }
