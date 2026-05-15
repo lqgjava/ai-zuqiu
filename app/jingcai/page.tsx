@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { jingcaiMatches } from '@/lib/sampleData';
 import { useJingcaiData } from '@/hooks/useFootballData';
 import { useLanguage } from '@/components/language-provider';
+import { TeamBadge } from '@/components/ui/team-badge';
 
 function bestResult(match: { aiPrediction: { home: number; draw: number; away: number } }, strings: any) {
   if (match.aiPrediction.home > match.aiPrediction.away && match.aiPrediction.home > match.aiPrediction.draw) {
@@ -107,7 +108,8 @@ export default function JingcaiPage() {
                 </div>
                 <div className="match-teams mb-3">
                   <div className="team-info">
-                    <p className="team-name">{match.homeTeam.short}</p>
+                    <TeamBadge name={match.homeTeam.short} badgeUrl={match.homeTeam.badgeUrl} size={44} />
+                    <p className="team-name mt-2">{match.homeTeam.short}</p>
                   </div>
                   <div className="match-score">
                     <span className="score">{match.homeScore ?? '-'}</span>
@@ -115,7 +117,8 @@ export default function JingcaiPage() {
                     <span className="score">{match.awayScore ?? '-'}</span>
                   </div>
                   <div className="team-info">
-                    <p className="team-name">{match.awayTeam.short}</p>
+                    <TeamBadge name={match.awayTeam.short} badgeUrl={match.awayTeam.badgeUrl} size={44} />
+                    <p className="team-name mt-2">{match.awayTeam.short}</p>
                   </div>
                 </div>
                 <div className="pt-3 border-t border-white/10">

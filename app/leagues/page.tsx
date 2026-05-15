@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { predictMatchSync } from '@/services/aiAnalysis';
 import { getFlagUrl } from '@/lib/flags';
+import { TeamBadge } from '@/components/ui/team-badge';
 
 interface Match {
   fixture: { id: number; date: string; status: { long: string } };
@@ -216,9 +217,13 @@ export default function LeaguesPage() {
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{match.league.name}</p>
-                          <p className="mt-2 text-lg font-semibold text-white">
-                            {match.teams.home.abbreviation} vs {match.teams.away.abbreviation}
-                          </p>
+                          <div className="mt-2 flex items-center gap-3">
+                            <TeamBadge name={match.teams.home.abbreviation} badgeUrl={match.teams.home.logo} size={36} />
+                            <p className="text-lg font-semibold text-white">
+                              {match.teams.home.abbreviation} vs {match.teams.away.abbreviation}
+                            </p>
+                            <TeamBadge name={match.teams.away.abbreviation} badgeUrl={match.teams.away.logo} size={36} />
+                          </div>
                         </div>
                         <Badge variant={getStatusVariant(match.fixture.status.long)}>
                           {match.fixture.status.long === 'LIVE'

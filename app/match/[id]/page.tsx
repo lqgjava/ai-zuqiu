@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { fetchMatchById } from '@/services/footballApi';
 import { formatDateTime } from '@/lib/utils';
 import { MatchOddsChart } from './MatchOddsChart';
+import { TeamBadge } from '@/components/ui/team-badge';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -40,10 +41,14 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
       <div className="bg-stadium-banner rounded-3xl p-8 mb-12">
         <section className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-400">比赛详情</p>
-            <h1 className="mt-2 text-4xl font-semibold text-white">{homeTeam.name} vs {awayTeam.name}</h1>
-            <p className="mt-2 text-slate-300">{match.league} · {match.stage} · {formatDateTime(match.kickOff)}</p>
+          <div className="flex items-center gap-4">
+            <TeamBadge name={homeTeam.short} badgeUrl={homeTeam.badgeUrl} size={56} />
+            <div>
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-400">比赛详情</p>
+              <h1 className="mt-2 text-4xl font-semibold text-white">{homeTeam.name} vs {awayTeam.name}</h1>
+              <p className="mt-2 text-slate-300">{match.league} · {match.stage} · {formatDateTime(match.kickOff)}</p>
+            </div>
+            <TeamBadge name={awayTeam.short} badgeUrl={awayTeam.badgeUrl} size={56} />
           </div>
           <Button variant="secondary" href="/parlay">回到串关助手</Button>
         </div>

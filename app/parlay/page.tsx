@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { allMatches } from '@/lib/sampleData';
 import { useLiveMatches } from '@/hooks/useFootballData';
 import type { ParlayAdvice, ParlayOutcome } from '@/types';
+import { TeamBadge } from '@/components/ui/team-badge';
 
 export default function ParlayPage() {
   const { matches: liveMatches, loading, error, source } = useLiveMatches(allMatches);
@@ -232,7 +233,11 @@ export default function ParlayPage() {
                         onClick={(e) => e.stopPropagation()}
                       />
                       <div>
-                        <p className="text-base font-semibold text-white">{match.homeTeam.short} vs {match.awayTeam.short}</p>
+                        <div className="flex items-center gap-2">
+                          <TeamBadge name={match.homeTeam.short} badgeUrl={match.homeTeam.badgeUrl} size={32} />
+                          <p className="text-base font-semibold text-white">{match.homeTeam.short} vs {match.awayTeam.short}</p>
+                          <TeamBadge name={match.awayTeam.short} badgeUrl={match.awayTeam.badgeUrl} size={32} />
+                        </div>
                         <p className="mt-1 text-sm text-slate-200">{match.league} · {match.stage}</p>
                       </div>
                     </div>

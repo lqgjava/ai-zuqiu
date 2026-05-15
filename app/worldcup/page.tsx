@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { worldCupMatches as fallbackMatches, worldCupStandings as fallbackStandings } from '@/lib/sampleData';
 import { useWorldCupData } from '@/hooks/useFootballData';
 import { predictMatchSync, predictChampion } from '@/services/aiAnalysis';
+import { TeamBadge } from '@/components/ui/team-badge';
 
 export default function WorldCupPage() {
   const { matches, standings, loading, error, source, lastUpdated, refresh } = useWorldCupData(fallbackMatches, fallbackStandings);
@@ -73,9 +74,13 @@ export default function WorldCupPage() {
                   <span>{match.time}</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-lg font-semibold text-white">{match.home} vs {match.away}</p>
-                    <p className="text-sm text-slate-200">{match.status}</p>
+                  <div className="flex items-center gap-3">
+                    <TeamBadge name={match.home} size={40} />
+                    <div>
+                      <p className="text-lg font-semibold text-white">{match.home} vs {match.away}</p>
+                      <p className="text-sm text-slate-200">{match.status}</p>
+                    </div>
+                    <TeamBadge name={match.away} size={40} />
                   </div>
                   {match.score ? <Badge variant="warning">{match.score}</Badge> : <Badge variant="success">准备中</Badge>}
                 </div>
