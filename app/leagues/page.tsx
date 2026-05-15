@@ -101,7 +101,8 @@ export default function LeaguesPage() {
 
   return (
     <main className="main-container py-12">
-      <section className="mb-10 space-y-6">
+      <div className="bg-league-banner rounded-3xl p-8 mb-10">
+        <section className="space-y-6">
         <div>
           <div className="flex items-center gap-3 mb-4">
             <p className="badge inline-flex">联赛数据中心</p>
@@ -165,6 +166,7 @@ export default function LeaguesPage() {
           </div>
         ) : null}
       </section>
+      </div>
 
       <section className="mb-10">
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">

@@ -6,37 +6,58 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { worldCupMatches as fallbackMatches, worldCupStandings as fallbackStandings } from '@/lib/sampleData';
 import { useWorldCupData } from '@/hooks/useFootballData';
+import { predictMatchSync, predictChampion } from '@/services/aiAnalysis';
 
 export default function WorldCupPage() {
-  const { matches, standings, loading, error, source } = useWorldCupData(fallbackMatches, fallbackStandings);
-  const lastUpdated = loading ? '—' : new Date().toLocaleTimeString();
+  const { matches, standings, loading, error, source, lastUpdated, refresh } = useWorldCupData(fallbackMatches, fallbackStandings);
+
+  const championPredictions = useMemo(() => predictChampion(standings), [standings]);
 
   const aiMenuPredictions = useMemo(
     () =>
-      matches.slice(0, 3).map((match, index) => ({
-        id: match.id,
-        matchup: `${match.home} vs ${match.away}`,
-        pick: index === 0 ? match.home : index === 1 ? match.away : `${match.home} 或 ${match.away}`,
-        confidence: `${Math.min(84, 70 + index * 6)}%`,
-        reason: match.status === 'Live' ? '根据场上态势与赔率波动实时调整' : '结合官方日历与大模型赛前推演',
-      })),
+      matches.slice(0, 3).map((match) => {
+        const prediction = predictMatchSync({
+          homeTeam: { name: match.home, ranking: 20 + Math.random() * 30, form: 0.5 },
+          awayTeam: { name: match.away, ranking: 20 + Math.random() * 30, form: 0.5 },
+          leagueContext: { name: 'World Cup', tier: 1 },
+          matchContext: { stage: match.stage, kickOff: match.time },
+        });
+        const maxProb = Math.max(prediction.home, prediction.draw, prediction.away);
+        const pick = prediction.home > prediction.away && prediction.home > prediction.draw
+          ? match.home : prediction.away > prediction.home && prediction.away > prediction.draw
+          ? match.away : `${match.home} 或 ${match.away}`;
+        return {
+          id: match.id,
+          matchup: `${match.home} vs ${match.away}`,
+          pick,
+          confidence: `${Math.round(maxProb * 100)}%`,
+          reason: match.status === 'Live' ? '根据场上态势与赔率波动实时调整' : prediction.summary,
+        };
+      }),
     [matches],
   );
 
   return (
     <main className="main-container py-10">
-      <section className="mb-12 space-y-6">
+      <div className="bg-worldcup-banner rounded-3xl p-8 mb-12">
+        <section className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400">世界杯专区</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-tight text-white">全球顶级赛事情报中心</h1>
             <p className="max-w-2xl text-slate-200">从赛程到积分榜，从淘汰赛树到冠军预测，一站式世界杯情报平台。</p>
           </div>
-          <Button variant="secondary" href="/">主页面</Button>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" href="/">主页面</Button>
+            <Button variant="ghost" onClick={refresh} className="text-slate-300">
+              手动刷新
+            </Button>
+          </div>
         </div>
         {error ? <p className="text-sm text-rose-300">{error}</p> : null}
-        {loading ? <p className="text-sm text-slate-400">加载实时数据中...</p> : null}
+        {loading ? <p className="text-sm text-slate-400">加载实时数据中...</p> : <p className="text-sm text-slate-400">最近刷新：{lastUpdated}</p>}
       </section>
+      </div>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr_0.9fr] mb-12">
         <Card className="space-y-6">
@@ -94,7 +115,7 @@ export default function WorldCupPage() {
           <div>
             <p className="text-sm uppercase tracking-[0.24em] text-slate-400">官方数据菜单</p>
             <h2 className="mt-2 text-2xl font-semibold text-white">官方日历 + AI 竞猜</h2>
-            <p className="mt-2 text-sm text-slate-300">自动拉取官方比赛日程与授权供应商数据，每分钟刷新一次，并提供 AI 预测推荐。</p>
+            <p className="mt-2 text-sm text-slate-300">拉取官方比赛日程与授权供应商数据，并提供 AI 预测推荐。支持手动刷新以减少接口调用。</p>
           </div>
 
           <div className="rounded-[2rem] border border-white/10 bg-slate-950/90 p-5">
@@ -144,20 +165,22 @@ export default function WorldCupPage() {
           <p className="text-sm uppercase tracking-[0.24em] text-slate-400">冠军预测</p>
           <h3 className="text-2xl font-semibold text-white">AI 预测冠军</h3>
           <p className="text-slate-300">综合球队状态、排名与赔率动态，AI 推荐当前最具夺冠潜力的阵营。</p>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-4">
-            <p className="text-sm text-slate-400">头号热门</p>
-            <p className="mt-2 text-xl font-semibold text-white">巴西</p>
-            <p className="mt-3 text-sm text-slate-300">胜率 28% · 形态稳定 · 多项数据领先</p>
-          </div>
+          {championPredictions.length > 0 && (
+            <div className="rounded-3xl border border-white/10 bg-slate-950/40 p-4">
+              <p className="text-sm text-slate-400">头号热门</p>
+              <p className="mt-2 text-xl font-semibold text-white">{championPredictions[0].team}</p>
+              <p className="mt-3 text-sm text-slate-300">胜率 {Math.round(championPredictions[0].probability * 100)}% · {championPredictions[0].summary}</p>
+            </div>
+          )}
         </Card>
 
         <Card className="space-y-4">
           <p className="text-sm uppercase tracking-[0.24em] text-slate-400">热门比赛</p>
           <h3 className="text-2xl font-semibold text-white">关注焦点场次</h3>
           <div className="space-y-3 text-slate-300">
-            <p>巴西 vs 法国 — 核心对决</p>
-            <p>阿根廷 vs 德国 — 冲击关键</p>
-            <p>葡萄牙 vs 西班牙 — 传统强队较量</p>
+            {matches.slice(0, 3).map((m) => (
+              <p key={m.id}>{m.home} vs {m.away} — {m.stage}</p>
+            ))}
           </div>
         </Card>
 
