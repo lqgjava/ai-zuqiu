@@ -9,10 +9,14 @@ export function Navbar() {
   const { strings } = useLanguage();
 
   return (
-    <header className="border-b border-neutral-dark bg-background shadow-card sticky top-0 z-50">
-      <div className="main-container flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
+    <header className="navbar-glow sticky top-0 z-50">
+      <div className="main-container flex flex-col gap-4 py-3 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-6">
-          <Link href="/" className="text-xl font-bold uppercase tracking-widest text-primary hover:text-primary-dark transition">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-lg font-bold uppercase tracking-widest text-primary hover:text-primary-light transition-colors"
+          >
+            <img src="/logo.svg" alt="" width={28} height={28} className="w-7 h-7" />
             {strings.navbar.brand}
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
@@ -27,7 +31,7 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-4 py-2 text-sm font-medium text-muted hover:text-primary transition-colors"
+                className="rounded-xl px-4 py-2 text-sm font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-white"
               >
                 {item.label}
               </Link>

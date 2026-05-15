@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { predictMatchSync } from '@/services/aiAnalysis';
+import { getFlagUrl } from '@/lib/flags';
 
 interface Match {
   fixture: { id: number; date: string; status: { long: string } };
@@ -38,18 +40,22 @@ function getStatusVariant(status: string) {
   return 'warning';
 }
 
-function buildAiPrediction(match: Match) {
-  const seed = Number(String(match.fixture.id).slice(-2)) || 42;
-  const home = Math.max(28, Math.min(65, Math.round((seed % 40) + 30)));
-  const draw = Math.max(18, Math.min(30, 100 - home - 25));
-  const away = 100 - home - draw;
-  const summary = home > away
-    ? 'AI 倾向主队进攻更有威胁，建议关注主队倾向。'
-    : away > home
-    ? 'AI 识别客队状态上升，客胜潜力增加。'
-    : 'AI 认为比赛平局概率较高，谨慎选择。';
+function getLeagueTier(leagueId: number): number {
+  const topLeagues = [39, 140, 135, 78, 61, 2, 3]; // Premier League, La Liga, Serie A, Bundesliga, Ligue 1, UCL, UEL
+  return topLeagues.includes(leagueId) ? 1 : 2;
+}
 
-  return { home, draw, away, summary };
+function buildAiPrediction(match: Match, leagueId: number) {
+  // Use team name length as a simple ranking proxy (teams with shorter names tend to be more famous)
+  const homeRanking = Math.max(10, 100 - match.teams.home.name.length * 3);
+  const awayRanking = Math.max(10, 100 - match.teams.away.name.length * 3);
+
+  return predictMatchSync({
+    homeTeam: { name: match.teams.home.name, ranking: homeRanking, form: 0.5 },
+    awayTeam: { name: match.teams.away.name, ranking: awayRanking, form: 0.5 },
+    leagueContext: { name: match.league.name, tier: getLeagueTier(leagueId) },
+    matchContext: { stage: match.league.name, kickOff: match.fixture.date },
+  });
 }
 
 export default function LeaguesPage() {
@@ -85,50 +91,77 @@ export default function LeaguesPage() {
     fetchLeaguesData();
 
     if (autoRefresh) {
-      const interval = setInterval(fetchLeaguesData, 30000);
+      const interval = setInterval(fetchLeaguesData, 300000);
       return () => clearInterval(interval);
     }
   }, [autoRefresh]);
 
   const currentLeague = leagues[selectedLeague] || null;
-  const sourceLabel = currentLeague?.error ? '备用样本数据' : '官方实时数据';
+
 
   return (
     <main className="main-container py-12">
       <section className="mb-10 space-y-6">
         <div>
-          <p className="badge inline-flex mb-4">官方联赛数据</p>
+          <div className="flex items-center gap-3 mb-4">
+            <p className="badge inline-flex">联赛数据中心</p>
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+              currentLeague?.error
+                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${currentLeague?.error ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+              {currentLeague?.error ? '示例数据' : '实时数据'}
+            </span>
+          </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">足球联赛实时数据中心</h1>
           <p className="text-slate-300 max-w-2xl text-lg">
-            覆盖全球主要联赛的实况比赛、积分榜与 AI 竞猜。若 API 未配置，将自动回退到本地备用数据展示。
+            覆盖全球 10 大联赛的实况比赛、积分榜与 AI 竞猜预测。
           </p>
         </div>
 
+        {/* API 密钥缺失提示 */}
+        {currentLeague?.error && (
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🔑</span>
+              <div>
+                <p className="font-semibold text-amber-300">未配置 API 密钥，当前显示示例数据</p>
+                <p className="mt-2 text-sm text-amber-200/80">
+                  要获取<strong>实时比赛和积分榜数据</strong>，请在 <code className="rounded bg-amber-500/10 px-1.5 py-0.5 text-xs">.env.local</code> 中设置
+                  <code className="mx-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs">API_FOOTBALL_KEY</code>。
+                </p>
+                <p className="mt-1 text-sm text-amber-200/60">
+                  免费获取密钥 → <a href="https://dashboard.api-football.com/register" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">dashboard.api-football.com/register</a>（免费层 100 次/天）
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={fetchLeaguesData} className="btn-primary">
-              🔄 手动刷新
-            </Button>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
-              自动刷新
-            </label>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button onClick={fetchLeaguesData} className="btn-primary">
+                🔄 手动刷新
+              </Button>
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+                自动刷新（5分钟）
+              </label>
+            </div>
           </div>
 
           {currentLeague && (
             <div className="flex flex-col items-end gap-1 text-sm text-slate-400">
-              <span>数据来源：{sourceLabel}</span>
               <span>最后更新: {new Date(currentLeague.lastUpdate).toLocaleTimeString('zh-CN')}</span>
             </div>
           )}
         </div>
 
         {error ? (
-          <div className="rounded-3xl border border-amber-300/20 bg-amber-300/10 p-4 text-amber-50">
-            <p className="font-semibold">提示：{error}</p>
-            <p className="mt-1 text-sm text-amber-100/80">
-              当前页面支持 `API_FOOTBALL_KEY` 实时接口，也会在未配置时自动显示备用样本数据。
-            </p>
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-4 text-rose-300 text-sm">
+            {error}
           </div>
         ) : null}
       </section>
@@ -146,7 +179,13 @@ export default function LeaguesPage() {
                   : 'border-white/10 bg-slate-950/80 text-slate-300 hover:border-primary hover:bg-slate-900/90'
               }`}
             >
-              <div className="text-3xl mb-2">{league.icon}</div>
+              <div className="mb-2">
+                {getFlagUrl(league.country) ? (
+                  <img src={getFlagUrl(league.country, 80)} alt={league.country} width={32} height={24} className="rounded-sm shadow-sm" />
+                ) : (
+                  <span className="text-3xl">{league.icon}</span>
+                )}
+              </div>
               <p className="text-sm font-semibold">{league.shortName}</p>
               <p className="mt-1 text-xs text-slate-400">{league.country}</p>
             </button>
@@ -169,7 +208,7 @@ export default function LeaguesPage() {
             <div className="space-y-4">
               {currentLeague.matches && currentLeague.matches.length > 0 ? (
                 currentLeague.matches.map((match) => {
-                  const prediction = buildAiPrediction(match);
+                  const prediction = buildAiPrediction(match, currentLeague.id);
                   return (
                     <div key={match.fixture.id} className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-5">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -191,15 +230,15 @@ export default function LeaguesPage() {
                       <div className="mt-4 grid gap-3 sm:grid-cols-3">
                         <div className="rounded-3xl bg-slate-950/70 p-4 text-center">
                           <p className="text-sm text-slate-400">主胜概率</p>
-                          <p className="mt-2 text-2xl font-semibold text-white">{prediction.home}%</p>
+                          <p className="mt-2 text-2xl font-semibold text-white">{Math.round(prediction.home * 100)}%</p>
                         </div>
                         <div className="rounded-3xl bg-slate-950/70 p-4 text-center">
                           <p className="text-sm text-slate-400">平局概率</p>
-                          <p className="mt-2 text-2xl font-semibold text-white">{prediction.draw}%</p>
+                          <p className="mt-2 text-2xl font-semibold text-white">{Math.round(prediction.draw * 100)}%</p>
                         </div>
                         <div className="rounded-3xl bg-slate-950/70 p-4 text-center">
                           <p className="text-sm text-slate-400">客胜概率</p>
-                          <p className="mt-2 text-2xl font-semibold text-white">{prediction.away}%</p>
+                          <p className="mt-2 text-2xl font-semibold text-white">{Math.round(prediction.away * 100)}%</p>
                         </div>
                       </div>
 
